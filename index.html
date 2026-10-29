@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midnight in the Graveyard</title>
+<!--
+  TEACHER SET-UP: edit the CONFIG block at the top of the <script> section.
+  LEADERBOARD_URL : leave as "/api/leaderboard" when hosted on Netlify with the leaderboard function.
+  TEACHER_PIN     : the code you give teams after checking their photos. It also unlocks any lock if a team is stuck.
+  CLASS_NAME      : change for each class so each class gets its own leaderboard (e.g. "7A").
+-->
+<style>
+:root{--bg:#12091f;--panel:#21123a;--panel2:#2e1a4d;--line:#4a2a75;--ink:#f6efff;--muted:#c3b2de;--gold:#ffc93c;--ok:#7cf06a;--bad:#ff5c5c;--accent:#ff7a1a;--lilac:#a97bff;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:radial-gradient(circle at 80% -10%,#5a2a8a 0%,var(--bg) 55%);background-color:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+.moon{position:fixed;top:24px;right:28px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7d6,#ffd96a 70%);box-shadow:0 0 60px 10px rgba(255,217,106,.35);opacity:.8;z-index:0}
+.float{position:fixed;font-size:28px;opacity:.3;z-index:0;pointer-events:none;animation:drift 14s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-25px)}}
+.wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:20px 16px 40px}
+header.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--muted)}
+.pill b{color:var(--ink)}
+.letters{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 16px}
+.letters div{width:36px;height:44px;border-radius:9px;background:var(--panel);border:2px solid var(--line);display:grid;place-items:center;font-size:21px;font-weight:800;color:var(--line)}
+.letters div.got{border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px rgba(255,122,26,.4)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.45);animation:pop .35s ease}
+@keyframes pop{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+h1{font-size:30px;margin:0 0 8px;color:var(--accent);text-shadow:0 0 12px rgba(255,122,26,.5)}
+h2{margin:0 0 6px;font-size:24px}
+h3{margin:18px 0 8px;font-size:18px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tag{display:inline-block;background:var(--panel2);color:var(--accent);padding:3px 10px;border-radius:999px;font-size:13px}
+.tag.think{color:#c9a8ff}
+.tag.move{color:var(--ok)}
+.story{color:var(--muted);line-height:1.55;margin:6px 0 14px}
+.spirit{display:inline-block;background:#12091f;border:2px solid var(--lilac);border-radius:12px;padding:6px 12px;font-weight:700;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.loc{background:var(--panel2);border:2px solid var(--line);border-radius:16px;padding:16px 10px;color:var(--ink);text-align:center;cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s}
+.loc:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 0 16px rgba(255,122,26,.35)}
+.loc .ic{font-size:44px;display:block;margin-bottom:6px}
+.loc .nm{font-weight:700;font-size:17px;display:block}
+.loc .tp{font-size:13px;color:var(--muted);display:block;margin-top:4px}
+.loc .stt{display:inline-block;margin-top:8px;font-size:14px;padding:3px 10px;border-radius:999px;background:#12091f}
+.loc.mission{border-style:dashed;border-color:var(--ok)}
+.loc.solved{border-style:solid;border-color:var(--ok);background:#1f3a1f}
+.loc.gate{grid-column:1/-1;background:#33204f}
+.loc.gate.locked{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;border-color:var(--line)}
+.q{background:var(--panel2);border-radius:14px;padding:16px;margin-bottom:12px;border:2px solid transparent}
+.q.right{border-color:var(--ok)}
+.q.wrong{border-color:var(--bad)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+ol.parts{margin:0 0 12px;padding-left:24px;font-size:18px;line-height:1.7}
+ol.parts li{margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chips span{background:#12091f;border:1px solid var(--line);border-radius:8px;padding:2px 10px;font-size:16px}
+.whisper{background:#12091f;border:2px solid var(--lilac);border-radius:12px;padding:12px 14px;font-size:19px;margin:8px 0}
+.visual{text-align:center;margin:8px 0 14px}
+.visual svg{max-width:100%;height:auto}
+.big{font-size:30px;letter-spacing:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text]{flex:1;min-width:140px;font-size:20px;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:#12091f;color:var(--ink);outline:none;letter-spacing:3px}
+input[type=text]:focus{border-color:var(--accent)}
+input[type=text]:disabled{opacity:.85;border-color:var(--ok)}
+button{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:10px 16px;font-weight:600;transition:transform .1s,filter .2s}
+button:hover{filter:brightness(1.1)}
+button:active{transform:scale(.97)}
+button:disabled{cursor:default;opacity:.55}
+.btn{background:var(--lilac);color:#140a24}
+.btn.gold{background:var(--accent);color:#1a0d00}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.big{font-size:18px;padding:13px 22px}
+.btn.tiny{font-size:13px;padding:6px 10px}
+.tok{background:#12091f;color:var(--ink);border:2px solid var(--line);font-size:24px;padding:8px 14px;min-width:56px}
+.tok small{display:block;font-size:12px;color:var(--muted)}
+.seqd{display:flex;gap:6px;flex-wrap:wrap;min-height:58px;align-items:center;justify-content:center;background:#12091f;border:2px dashed var(--line);border-radius:12px;padding:8px;margin:10px 0}
+.seqd span{font-size:30px}
+.seqd em{color:var(--muted);font-style:normal;font-size:14px}
+.key{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.key div{background:#12091f;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:18px}
+.cipher{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;margin:4px 0}
+.cipher div{background:#12091f;border:1px solid var(--line);border-radius:6px;padding:3px 0;font-size:13px;text-align:center;color:var(--muted)}
+.cipher b{display:block;color:var(--accent);font-size:16px}
+@media (max-width:560px){.cipher{grid-template-columns:repeat(7,1fr)}}
+.hint{display:none;margin-top:10px;background:#170c2a;border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;color:#efe6ff;font-size:15px;line-height:1.6}
+.hint.show{display:block}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.teacher{display:none;margin-top:10px;background:#12091f;border:1px dashed var(--line);border-radius:10px;padding:10px}
+.teacher.show{display:block}
+.feedback{min-height:24px;margin:10px 0;font-weight:600}
+.feedback.ok{color:var(--ok)}
+.feedback.bad{color:var(--bad)}
+.success{display:none;margin-top:14px;text-align:center;background:#1f3a1f;border:2px solid var(--ok);border-radius:14px;padding:16px}
+.success.show{display:block;animation:pop .35s}
+.letter{font-size:56px;font-weight:800;color:var(--accent);text-shadow:0 0 14px rgba(255,122,26,.6)}
+.bonus{margin-top:14px;text-align:left;background:#33204f;border:2px dashed var(--gold);border-radius:14px;padding:14px}
+.bonus .bq{font-size:17px;line-height:1.6;margin-bottom:10px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.85em;margin:0 2px;line-height:1.2}
+.frac span:first-child{border-bottom:2px solid currentColor;padding:0 3px}
+.tiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.tiles div{width:44px;height:56px;border-radius:9px;background:#12091f;border:2px solid var(--accent);display:grid;place-items:center;font-size:27px;font-weight:800;color:var(--accent)}
+.statbox{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.statbox div{background:var(--panel2);border-radius:12px;padding:12px 18px;min-width:120px}
+.statbox b{display:block;font-size:26px;color:var(--accent)}
+.lb{width:100%;border-collapse:collapse;margin-top:6px;font-size:16px}
+.lb th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1px;padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.lb td{padding:9px 6px;border-bottom:1px solid #2e1a4d}
+.lb td.num{text-align:right;font-variant-numeric:tabular-nums}
+.lb th.num{text-align:right}
+.lb tr.me td{background:#3a2410;color:var(--gold);font-weight:700}
+.lbnote{font-size:13px;color:var(--muted);margin-top:8px}
+.center{text-align:center}
+.small{font-size:14px;color:var(--muted)}
+.rules{text-align:left;line-height:1.8;color:#efe6ff;background:var(--panel2);padding:12px 16px;border-radius:12px;margin:14px 0}
+.hidden{display:none !important}
+canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+</style>
+</head>
+<body>
+<div class="moon"></div>
+<div class="float" style="top:18%;left:4%">🦇</div>
+<div class="float" style="top:55%;right:5%;animation-delay:-4s">👻</div>
+<div class="float" style="top:82%;left:7%;animation-delay:-8s">🦇</div>
+<div class="float" style="top:35%;right:12%;animation-delay:-2s;font-size:22px">🕸️</div>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <header class="top hidden" id="topbar">
+    <div class="pill">👥 <b id="teamLabel"></b></div>
+    <div class="stats">
+      <div class="pill" id="clockPill">🕰️ Midnight in <b>60:00</b></div>
+      <div class="pill">💡 Hints: <b id="hintCount">0</b></div>
+      <div class="pill">⭐ Stars: <b id="starCount">0</b></div>
+    </div>
+  </header>
+  <div class="letters hidden" id="letters"></div>
+  <main id="app"></main>
+</div>
+
+<script>
+/* ================= TEACHER SETTINGS ================= */
+const CONFIG={
+  LEADERBOARD_URL:"/api/leaderboard",
+  TEACHER_PIN:"1031",
+  CLASS_NAME:"Grade 7",
+  GAME_MINUTES:60
+};
+/* ==================================================== */
+
+const F=(a,b)=>`<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+function cipher(){let s='<div class="cipher">';for(let i=0;i<26;i++)s+=`<div><b>${String.fromCharCode(65+i)}</b>${i+1}</div>`;return s+'</div>';}
+function triangleSVG(){
+  return `<svg viewBox="0 0 500 230" width="470">
+  <line x1="30" y1="190" x2="475" y2="190" stroke="#f6efff" stroke-width="3"/>
+  <polygon points="90,190 330,190 230,45" fill="#2e1a4d" stroke="#f6efff" stroke-width="3"/>
+  <path d="M 370 190 A 40 40 0 0 0 307.3 157.1" fill="none" stroke="#ff7a1a" stroke-width="3"/>
+  <text x="112" y="180" fill="#ff7a1a" font-size="18">75°</text>
+  <text x="296" y="182" fill="#a97bff" font-size="24" font-style="italic">a</text>
+  <text x="372" y="160" fill="#ff7a1a" font-size="18">128°</text>
+  <text x="223" y="82" fill="#a97bff" font-size="24" font-style="italic">b</text>
+  <text x="400" y="222" fill="#c3b2de" font-size="12">not to scale</text>
+  <text x="40" y="60" font-size="30">⚰️</text></svg>`;
+}
+const SPIRITS={
+  bat:{icon:"🦇",name:"Bat",other:"Black Cat",whisper:"“The number is a multiple of 7 between 40 and 80.”"},
+  cat:{icon:"🐈‍⬛",name:"Black Cat",other:"Bat",whisper:"“The two digits of the number add up to 11.”"}
+};
+
+/* ================= THE 10 LOCKS ================= */
+const locks=[
+ {icon:"🎃",name:"Pumpkin Patch",lockType:"4-digit lock",think:"👀 Number line",topic:"Integers",
+  kind:"digits",code:"4302",letter:"T",
+  intro:"Four pumpkins glow on the path, each with a sum carved into it. Each answer is <b>one digit</b> of the code. Put them in order.",
+  parts:["(−2) × (−5) − 6","(−36) ÷ (−4) − 6","(−3)<sup>2</sup> − 3 × 3","At 11 pm it is −6 °C. The temperature rises by 2 °C every hour. What is the temperature at 3 am?"],
+  hints:["Use BIDMAS: do the multiplying, dividing and powers before adding or subtracting. Negative × negative is positive.","(−3)<sup>2</sup> means (−3) × (−3). From 11 pm to 3 am is 4 hours."],
+  bonus:{q:"Work out (−3)<sup>2</sup> − (−2)<sup>3</sup>",a:["17"],h:"(−3)<sup>2</sup> = 9 and (−2)<sup>3</sup> = −8. Then 9 − (−8)."}},
+
+ {icon:"📖",name:"Witch's Spellbook",lockType:"5-letter word lock",think:"🔐 Code-breaking",topic:"Fractions & decimals",
+  kind:"word",code:"BROOM",letter:"R",
+  intro:"The spellbook is sealed with a magic word. Work out each answer, then use the code wheel (A = 1, B = 2 …) to turn each number into a letter.",
+  parts:["0.4 × 5",`${F(2,3)} of 27`,`2${F(1,2)} × 6`,"0.6 × 25",`1${F(5,8)} × 8`],
+  visual:()=>cipher(),
+  hints:[`To find ${F(2,3)} of 27, divide by 3 then multiply by 2. For 0.6 × 25, think 6 × 25 ÷ 10.`,`Split mixed numbers: 2${F(1,2)} × 6 = (2 × 6) + (${F(1,2)} × 6). The word is something a witch rides!`],
+  bonus:{q:`Work out ${F(3,5)} ÷ ${F(9,10)}. Give your answer as a fraction in its simplest form.`,a:["2/3"],h:"Keep, change, flip: multiply by the reciprocal of the second fraction, then simplify."}},
+
+ {icon:"🦇",name:"Bat Cave",lockType:"Direction lock",think:"🧭 Path-finding",topic:"Algebra",
+  kind:"seq",code:["U","D","R","L","D"],letter:"I",
+  tokens:[{v:"U",l:"⬆️"},{v:"D",l:"⬇️"},{v:"L",l:"⬅️"},{v:"R",l:"➡️"}],
+  intro:"Bats swirl around you. Only one path leads out of the cave. Each correct answer shows an arrow. Enter the <b>5 arrows</b> in order.",
+  parts:[
+   "Simplify 4<i>x</i> + 3<i>x</i> − 2<i>x</i><div class='chips'><span>⬆️ 5<i>x</i></span><span>⬇️ 9<i>x</i></span><span>⬅️ 5<i>x</i><sup>2</sup></span><span>➡️ 9<i>x</i><sup>2</sup></span></div>",
+   "Expand 3(<i>x</i> + 4)<div class='chips'><span>⬆️ 3<i>x</i> + 4</span><span>⬇️ 3<i>x</i> + 12</span><span>⬅️ <i>x</i> + 12</span><span>➡️ 7<i>x</i></span></div>",
+   "If <i>y</i> = 2<i>x</i> − 3, find <i>y</i> when <i>x</i> = 5<div class='chips'><span>⬆️ 13</span><span>⬇️ 10</span><span>⬅️ 4</span><span>➡️ 7</span></div>",
+   `Solve ${F('<i>x</i>',4)} = 6<div class='chips'><span>⬆️ 1.5</span><span>⬇️ 10</span><span>⬅️ 24</span><span>➡️ 2</span></div>`,
+   "Which expression means “double a number <i>n</i>, then add 7”?<div class='chips'><span>⬆️ 2(<i>n</i> + 7)</span><span>⬇️ 2<i>n</i> + 7</span><span>⬅️ <i>n</i><sup>2</sup> + 7</span><span>➡️ 7<i>n</i> + 2</span></div>"],
+  hints:["Like terms combine: 4 + 3 − 2 = ? Squaring only happens when you multiply terms.","Expanding means multiply <b>everything</b> in the bracket by 3. To undo ÷ 4, multiply by 4."],
+  bonus:{q:"Solve 5<i>x</i> − 8 = 2<i>x</i> + 13",a:["7"],h:"Subtract 2<i>x</i> from both sides, then add 8 to both sides."}},
+
+ {icon:"👻",name:"Ghost's Grave",lockType:"3-digit lock",think:"🧠 Logic",topic:"Number properties",
+  kind:"digits",code:"296",letter:"C",
+  intro:"A ghost has carved a 3-digit code onto its gravestone, then scratched it out. Luckily, it left these clues…",
+  parts:["The first digit is the only even prime number.","The second digit is a square number greater than 4.","The third digit is a factor of 12.","All three digits add up to 17."],
+  visual:()=>`<div class="big">🪦 ? ? ?</div>`,
+  hints:["A prime number has exactly two factors. Which even number has exactly two?","Square numbers: 1, 4, 9, 16 … Only one is a single digit bigger than 4. Then use the total of 17 to find the last digit."],
+  bonus:{q:"How many different 3-digit codes can you make using the digits 2, 9 and 6 once each?",a:["6"],h:"Try listing them in order: 269, 296, 629 …"}},
+
+ {icon:"🧪",name:"Bubbling Cauldron",lockType:"Colour lock",think:"🎨 Matching",topic:"Percentages",
+  kind:"seq",code:["G","O","P","R"],letter:"K",
+  tokens:[{v:"G",l:"🟢",s:"Green"},{v:"Y",l:"🟡",s:"Yellow"},{v:"O",l:"🟠",s:"Orange"},{v:"K",l:"⚫",s:"Black"},{v:"P",l:"🟣",s:"Purple"},{v:"R",l:"🔴",s:"Red"}],
+  intro:"Add the potion ingredients in the right order or… KABOOM! Work out each answer, find its colour on the potion key, then enter the <b>4 colours</b> in order.",
+  parts:["25% of 48","15% of 200","60% of 75","AED 50 increased by 20%"],
+  visual:()=>`<div class="key"><div>🟢 = 12</div><div>🟡 = 24</div><div>🟠 = 30</div><div>⚫ = 18</div><div>🟣 = 45</div><div>🔴 = 60</div></div>`,
+  hints:["25% is the same as a quarter. 10% means divide by 10.","60% = 6 lots of 10%. For an increase, find 20% and add it on to the original."],
+  bonus:{q:"After a 20% increase, a spooky lantern costs AED 96. What was the original price in AED?",a:["80"],h:"AED 96 is 120% of the original. Try 96 ÷ 1.2."}},
+
+ {icon:"🕰️",name:"Grandfather Clock",lockType:"Time lock",think:"🛒 Real life",topic:"Ratio & proportion",
+  kind:"time",code:"0645",letter:"O",
+  intro:"The old clock stopped at a mysterious time. Work out the hour and the minutes, then set the clock (e.g. 07:30 → type 0730).",
+  parts:["<b>Hour:</b> Green and purple slime are mixed in the ratio 2 : 5. There are 21 ml altogether. How many ml are green?","<b>Minutes:</b> A recipe for 4 zombies needs 10 eyeballs. How many eyeballs are needed for 18 zombies?"],
+  visual:()=>`<div class="big">🕰️ ?? : ??</div>`,
+  hints:["2 + 5 = 7 parts in total. Find what one part is worth first.","Find the eyeballs for 1 zombie (10 ÷ 4), then multiply by 18."],
+  bonus:{q:"84 sweets are shared in the ratio 2 : 5 : 7. How many are in the largest share?",a:["42"],h:"2 + 5 + 7 = 14 parts. One part = 84 ÷ 14."}},
+
+ {icon:"⚰️",name:"Crooked Coffin",lockType:"4-digit lock",think:"📐 Visual geometry",topic:"Angles",
+  kind:"digits",code:"5253",letter:"R",
+  intro:"The coffin lid is a triangle on a straight line. Find the missing angles. The code is the size of angle <i>a</i> followed by angle <i>b</i>.",
+  parts:["Find angle <i>a</i>.","Find angle <i>b</i>.","Write the code as <i>a</i> then <i>b</i> (4 digits)."],
+  visual:()=>triangleSVG(),
+  hints:["Angles on a straight line add up to 180°.","Angles in a triangle add up to 180°, so 75 + <i>a</i> + <i>b</i> = 180."],
+  bonus:{q:"What is the size of each interior angle of a regular hexagon, in degrees?",a:["120"],h:"A hexagon can be split into 4 triangles, so its angles add up to 4 × 180°. Share that between 6 angles."}},
+
+ {icon:"🏚️",name:"Gravedigger's Shed",lockType:"5-letter word lock",think:"🔐 Code-breaking",topic:"Area & perimeter",
+  kind:"word",code:"GHOST",letter:"T",
+  intro:"Shapes are carved into the shed door. Work out each answer, then use the code wheel to turn it into a letter.",
+  parts:["Area of a triangle with base 2 cm and height 7 cm (cm²)","Area of a rectangle 4 cm by 2 cm (cm²)","Perimeter of a rectangle 5 cm by 2.5 cm (cm)","Perimeter of a triangle with sides 6 cm, 6 cm and 7 cm (cm)","Area of a trapezium with parallel sides 3 cm and 7 cm and height 4 cm (cm²)"],
+  visual:()=>cipher(),
+  hints:[`Area of a triangle = ${F(1,2)} × base × height. Perimeter means add up all the sides.`,`Area of a trapezium = ${F(1,2)} × (<i>a</i> + <i>b</i>) × <i>h</i>. The word is something spooky!`],
+  bonus:{q:"A rectangle 10 cm by 6 cm has a 4 cm by 3 cm rectangle cut out of one corner. What is the area of the shape that is left, in cm²?",a:["48"],h:"Find the area of the big rectangle, then subtract the small one."}},
+
+ {icon:"🧟",name:"Mummy's Tomb",lockType:"6-digit lock",think:"🔁 Patterns",topic:"Sequences",
+  kind:"digits",code:"311936",letter:"A",
+  intro:"The mummy's tomb is sealed with a 6-digit lock. Each answer below is a <b>2-digit number</b>. Write them in order to make the code.",
+  parts:["The sequence 4, 7, 10, 13, … continues. What is its 10th term?","Which term of the same sequence is equal to 58?","The mummy builds coffins out of bandage strips. Coffin 1 uses 6 strips, coffin 2 uses 11 and coffin 3 uses 16. How many strips does coffin 7 use?"],
+  visual:()=>`<div class="big">⚰️ 6 → ⚰️⚰️ 11 → ⚰️⚰️⚰️ 16 → …</div>`,
+  hints:["The sequence goes up by 3 each time, so the rule is 3<i>n</i> + something. Check it works when <i>n</i> = 1.","The rule is 3<i>n</i> + 1, so solve 3<i>n</i> + 1 = 58. The coffins go up by 5 each time: what is the rule for those?"],
+  bonus:{q:"Find the <i>n</i>th term of the sequence 2, 9, 16, 23, …",a:["7n-5","-5+7n"],h:"It goes up by 7 each time, so start with 7<i>n</i>. What do you need to subtract to get 2 when <i>n</i> = 1?"}},
+
+ {icon:"🧛",name:"Vampire's Vault",lockType:"6-digit lock",think:"📊 Data detective",topic:"Averages",
+  kind:"digits",code:"120210",letter:"T",
+  intro:"Five vampires guard the vault. Their ages (in years) are written on the door:",
+  parts:["<div class='chips'><span>120</span><span>85</span><span>300</span><span>85</span><span>160</span></div>Find the <b>median</b> age. This is the first 3 digits of the code.","A sixth vampire arrives. Now the <b>mean</b> age of all six vampires is 160. How old is the new vampire? This is the last 3 digits."],
+  visual:()=>`<div class="big">🧛 🧛 🧛 🧛 🧛 + 🧛❓</div>`,
+  hints:["For the median, put the ages in order first and find the middle one.","If the mean of 6 vampires is 160, their ages add up to 6 × 160. Subtract the total of the first five."],
+  bonus:{q:"A witch's bag holds 3 eyeballs, 5 spiders and 2 bats. She picks one item at random. What is the probability it is a spider? Give your answer as a fraction in its simplest form.",a:["1/2","0.5","5/10"],h:"Probability = number of spiders ÷ total number of items."}},
+
+ {icon:"📸",name:"Spooky Shape Hunt",lockType:"Teacher lock",think:"🏃 Get moving",topic:"Shape in real life",mission:true,
+  kind:"pin",letter:"R",
+  intro:"The graveyard ghosts want proof that maths haunts the whole school! Leave your desk (stay in the areas your teacher allows) and take a <b>team photo</b> next to each of these. Pull your spookiest faces!",
+  parts:["📐 A right angle","⭕ Something circular","🪞 Something with a line of symmetry","↔️ A pair of parallel lines","👻 Bonus fright: everyone in your team must appear in at least one photo"],
+  visual:()=>`<div class="big">📸 👻 📐</div>`,
+  after:"When you have all four photos, show them to your teacher. If they are happy, they will type the secret code into the lock.",
+  hints:["Look at doors, windows, tables, clocks, floor tiles and signs. Maths is everywhere!","Parallel lines never meet: think of the edges of a door, a ruler or the lines on a basketball court."],
+  bonus:{q:"A classroom door is 2.1 m tall and 0.9 m wide. What is its area in m²?",a:["1.89"],h:"Area of a rectangle = length × width. Work out 21 × 9 first, then place the decimal point."}},
+
+ {icon:"🔮",name:"The Séance",lockType:"2-digit lock",think:"🤝 Team-up",topic:"Multiples & reasoning",mission:true,
+  kind:"digits",code:"56",letter:"E",seance:true,
+  intro:"The spirits are whispering a secret number, but each spirit only knows <b>half</b> of the secret!",
+  parts:[],
+  visual:()=>`<div class="big">🔮 ? ?</div>`,
+  hints:["Find a team with the OTHER spirit and swap whispers. You can only say your clue out loud. No showing screens!","List the multiples of 7 between 40 and 80: 42, 49, 56 … Then add up the digits of each one."],
+  bonus:{q:"How many two-digit numbers have digits that add up to 11?",a:["8"],h:"Start with 29, then 38, 47 … keep going until the first digit gets too big."}}
+];
+const FINAL="TRICKORTREAT";
+
+/* ================= STATE & HELPERS ================= */
+const app=document.getElementById('app');
+let st={timer:null};
+function reset(){clearInterval(st.timer);clearInterval(st.lbTimer);st={team:'',hints:0,stars:0,start:0,timer:null,lbTimer:null,solved:{},hintLevel:{},bonus:{},seq:{},cur:null,gateHint:false,spirit:Math.random()<.5?'bat':'cat',finished:false,entryId:null,secs:0};}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function normNum(s){return String(s).toLowerCase().replace(/[−–—]/g,'-').replace(/\s+/g,'').replace(/°|degrees|aed|cm²|cm\^2|cm2|cm|m²|m\^2|m2|sweets/g,'').replace(/^[a-z]=/,'');}
+const isNum=s=>/^-?\d*\.?\d+$/.test(s);
+function bonusRight(v,ans){const n=normNum(v);if(!n)return false;return ans.some(a=>{const an=normNum(a);return n===an||(isNum(n)&&isNum(an)&&Math.abs(parseFloat(n)-parseFloat(an))<1e-9);});}
+function fmt(ms){const s=Math.floor(Math.abs(ms)/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+const fmtS=s=>fmt(s*1000);
+function tick(){
+  const rem=CONFIG.GAME_MINUTES*60000-(Date.now()-st.start),p=document.getElementById('clockPill');
+  p.innerHTML=rem>=0?`🕰️ Midnight in <b>${fmt(rem)}</b>`:`🕛 Past midnight! <b>+${fmt(rem)}</b>`;
+}
+function updStats(){document.getElementById('hintCount').textContent=st.hints;document.getElementById('starCount').textContent=st.stars;}
+function drawLetters(){document.getElementById('letters').innerHTML=locks.map((L,i)=>st.solved[i]?`<div class="got" title="${L.name}">${L.letter}</div>`:`<div title="${L.name}">?</div>`).join('');}
+function shake(el){if(!el)return;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/−/g,' minus ').replace(/×/g,' times ').replace(/÷/g,' divided by '));u.lang='en-GB';u.rate=.95;speechSynthesis.speak(u);}catch(e){}}
+function hush(){try{speechSynthesis.cancel();}catch(e){}}
+const solvedCount=()=>Object.keys(st.solved).length;
+
+/* ================= LEADERBOARD ================= */
+const LB_LOCAL='graveyardLeaderboard_'+CONFIG.CLASS_NAME;
+const lbOnline=()=>!!CONFIG.LEADERBOARD_URL&&!/PASTE/.test(CONFIG.LEADERBOARD_URL)&&location.protocol.startsWith('http');
+function localGet(){try{return JSON.parse(localStorage.getItem(LB_LOCAL)||'[]');}catch(e){return [];}}
+function localSave(a){try{localStorage.setItem(LB_LOCAL,JSON.stringify(a));}catch(e){}}
+async function lbCall(params){
+  if(!lbOnline())return null;
+  try{
+    const q=new URLSearchParams(Object.assign({cls:CONFIG.CLASS_NAME},params));
+    const r=await fetch(CONFIG.LEADERBOARD_URL+'?'+q.toString(),{cache:'no-store'});
+    const j=await r.json();
+    return j&&j.ok?j:null;
+  }catch(e){return null;}
+}
+async function lbSubmit(entry){
+  const res=await lbCall({action:'submit',id:entry.id,team:entry.team,secs:entry.secs,hints:entry.hints,stars:entry.stars});
+  if(res)return {rows:res.top,online:true};
+  const a=localGet();if(!a.some(r=>r.id===entry.id))a.push(entry);localSave(a);
+  return {rows:a.slice().sort((x,y)=>x.secs-y.secs).slice(0,10),online:false};
+}
+async function lbFetch(){
+  const res=await lbCall({action:'list'});
+  if(res)return {rows:res.top,online:true};
+  return {rows:localGet().sort((x,y)=>x.secs-y.secs).slice(0,10),online:false};
+}
+function lbTable(data,meId){
+  const medals=['🥇','🥈','🥉'];
+  if(!data.rows.length)return `<p class="small">No teams have escaped yet. Will you be the first?</p>`;
+  return `<table class="lb"><thead><tr><th>#</th><th>Team</th><th class="num">Time</th><th class="num">💡</th><th class="num">⭐</th></tr></thead><tbody>
+    ${data.rows.map((r,i)=>`<tr class="${r.id===meId?'me':''}"><td>${medals[i]||i+1}</td><td>${esc(r.team)}</td><td class="num">${fmtS(r.secs)}</td><td class="num">${r.hints}</td><td class="num">${r.stars}</td></tr>`).join('')}
+  </tbody></table>
+  <p class="lbnote">${data.online?`🔴 Live leaderboard for ${esc(CONFIG.CLASS_NAME)}. Updates every 20 seconds.`:'Leaderboard is only showing results from this device.'}</p>`;
+}
+async function showBoard(target,meId){
+  const el=document.getElementById(target);if(!el)return;
+  const data=await lbFetch();
+  if(document.getElementById(target))el.innerHTML=lbTable(data,meId);
+}
+async function leaderboardScreen(){
+  hush();window.scrollTo(0,0);
+  app.innerHTML=`<div class="card">
+    <button class="btn ghost" id="lbBack">⬅ Back</button>
+    <h2 style="margin-top:12px">🏆 Fastest Escapers: ${esc(CONFIG.CLASS_NAME)}</h2>
+    <div id="lbBox"><p class="small">Summoning the scores…</p></div>
+  </div>`;
+  document.getElementById('lbBack').onclick=()=>st.start?hub():intro();
+  showBoard('lbBox');
+}
+
+/* ================= SCREENS ================= */
+function intro(){
+  document.getElementById('topbar').classList.add('hidden');
+  document.getElementById('letters').classList.add('hidden');
+  app.innerHTML=`<div class="card center">
+    <div style="font-size:64px">🪦🎃🕰️</div>
+    <h1>Midnight in the Graveyard</h1>
+    <p class="story">It's Halloween night and you and your friends have wandered into an old graveyard. The gate has slammed shut behind you! There are <b>12 locks</b> hidden around the graveyard. Each one gives you a <b>secret letter</b>. Unscramble the letters to open the gate before the clock strikes 12… or else.</p>
+    <div class="rules">
+      🗺️ Explore the graveyard and open the locks in <b>any order</b>.<br>
+      🧩 Each lock has linked questions. Their answers make the code.<br>
+      🏃 Two locks are <b>missions</b>: you'll need to move around and work with another team.<br>
+      🔒 Wrong code? The lock tells you how many parts are in the right place.<br>
+      💡 Two hints per lock, and 🔊 Read aloud for every clue.<br>
+      ⭐ Feeling brave? Every lock has a Gold Star challenge.<br>
+      🏆 The fastest teams go on the class leaderboard!
+    </div>
+    <div class="row" style="justify-content:center">
+      <input type="text" id="team" placeholder="Your team name" maxlength="24" style="max-width:320px;letter-spacing:0">
+      <button class="btn gold big" id="startBtn">Enter if you dare 👻</button>
+    </div>
+    <div style="margin-top:14px"><button class="btn ghost" id="lbBtn">🏆 View leaderboard</button></div>
+  </div>`;
+  document.getElementById('startBtn').onclick=start;
+  document.getElementById('lbBtn').onclick=leaderboardScreen;
+  document.getElementById('team').addEventListener('keydown',e=>{if(e.key==='Enter')start();});
+}
+
+function start(){
+  st.team=document.getElementById('team').value.trim()||'The Ghostbusters';
+  st.start=Date.now();
+  document.getElementById('teamLabel').textContent=st.team;
+  document.getElementById('topbar').classList.remove('hidden');
+  document.getElementById('letters').classList.remove('hidden');
+  clearInterval(st.timer);st.timer=setInterval(tick,1000);tick();updStats();
+  hub();
+}
+
+function hub(){
+  hush();clearInterval(st.lbTimer);drawLetters();window.scrollTo(0,0);
+  const all=solvedCount()===locks.length,sp=SPIRITS[st.spirit];
+  app.innerHTML=`<div class="card">
+    <h2>🌙 The Graveyard</h2>
+    <div class="spirit">Your team's spirit: ${sp.icon} ${sp.name}</div>
+    <p class="story" style="margin-top:0">Click anywhere to explore. Locks opened: <b>${solvedCount()} / ${locks.length}</b> &nbsp; <button class="btn ghost tiny" id="lbBtn">🏆 Leaderboard</button></p>
+    <div class="grid">
+      ${locks.map((L,i)=>`<button class="loc ${L.mission?'mission':''} ${st.solved[i]?'solved':''}" data-i="${i}">
+        <span class="ic">${L.icon}</span><span class="nm">${L.name}</span><span class="tp">${L.mission?'🏃 Mission · ':''}${L.lockType} · ${L.topic}</span>
+        <span class="stt">${st.solved[i]?'✅ Letter '+L.letter:'🔒 Locked'}</span></button>`).join('')}
+      <button class="loc gate ${all?'':'locked'}" id="gateBtn" ${all?'':'disabled'}>
+        <span class="ic">🚪</span><span class="nm">The Graveyard Gate</span>
+        <span class="tp">${all?'Unscramble your letters to escape!':'Open all 12 locks to reach the gate'}</span></button>
+    </div></div>`;
+  app.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>openLock(+b.dataset.i));
+  document.getElementById('lbBtn').onclick=leaderboardScreen;
+  if(all)document.getElementById('gateBtn').onclick=gate;
+}
+
+function lockParts(L){
+  if(!L.seance)return L.parts;
+  const sp=SPIRITS[st.spirit];
+  return [
+    `Your spirit is <b>${sp.icon} ${sp.name}</b>. Your spirit whispers:<div class="whisper">${sp.icon} ${sp.whisper}</div>`,
+    `The other half of the secret belongs to the <b>${sp.other}</b> spirits. Go and find a team with that spirit and swap whispers.`,
+    `<b>Séance rules:</b> you may only <b>say</b> your whisper out loud. No showing screens and no writing it down for them!`,
+    `Use <b>both</b> whispers to find the secret 2-digit number.`
+  ];
+}
+
+function openLock(i){
+  st.cur=i;const L=locks[i];window.scrollTo(0,0);
+  if(!st.seq[i])st.seq[i]=[];
+  let entry;
+  if(L.kind==='seq'){
+    entry=`<div class="seqd" id="seqd"></div>
+      <div class="row" style="justify-content:center">${L.tokens.map(t=>`<button class="tok" data-t="${t.v}">${t.l}${t.s?`<small>${t.s}</small>`:''}</button>`).join('')}</div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost" id="undoBtn">↩ Undo</button><button class="btn ghost" id="clearBtn">Clear</button><button class="btn gold" id="tryBtn">🗝️ Try the lock</button></div>`;
+  }else if(L.kind==='pin'){
+    entry=`<p class="story" style="color:var(--ink)">${L.after}</p>
+      <div class="row"><input type="password" id="codeInp" autocomplete="off" placeholder="Teacher types the code here" style="flex:1;min-width:140px;font-size:20px;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:#12091f;color:var(--ink)"><button class="btn gold" id="tryBtn">🗝️ Unlock</button></div>`;
+  }else{
+    const len=L.code.length,what=L.kind==='word'?'letters':'digits';
+    entry=`<div class="row"><input type="text" id="codeInp" autocomplete="off" maxlength="${len+4}" placeholder="${len} ${what}"><button class="btn gold" id="tryBtn">🗝️ Try the lock</button></div>`;
+  }
+  app.innerHTML=`<div class="card">
+    <button class="btn ghost" id="backBtn">⬅ Back to the graveyard</button>
+    <div class="tags" style="margin-top:12px">${L.mission?'<span class="tag move">🏃 Mission</span>':''}<span class="tag">${L.lockType}</span><span class="tag think">${L.think}</span><span class="tag">${L.topic}</span></div>
+    <h2>${L.icon} ${L.name}</h2>
+    <div class="q" id="qbox">
+      <div id="lockText">
+        <p class="story" style="color:var(--ink)">${L.intro}</p>
+        <ol class="parts">${lockParts(L).map(p=>`<li>${p}</li>`).join('')}</ol>
+      </div>
+      ${L.visual?`<div class="visual">${L.visual()}</div>`:''}
+      ${entry}
+      <div class="tools">
+        <button class="btn ghost" id="hintBtn">💡 Hint</button>
+        <button class="btn ghost" id="readBtn">🔊 Read aloud</button>
+        ${L.kind==='pin'?'':'<button class="btn ghost tiny" id="tBtn" title="Teacher unlock">👩‍🏫</button>'}
+      </div>
+      <div class="teacher" id="tBox"><div class="row"><input type="password" id="tInp" autocomplete="off" placeholder="Teacher code" style="flex:1;min-width:120px;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#1a0f2e;color:var(--ink)"><button class="btn tiny" id="tGo">Unlock</button></div></div>
+      <div class="hint" id="hint1">${L.hints[0]}</div>
+      <div class="hint" id="hint2">${L.hints[1]}</div>
+    </div>
+    <div class="feedback" id="fb"></div>
+    <div class="success" id="succ">
+      <h2>🔓 The lock clicks open!</h2>
+      <p class="small">Your secret letter is:</p>
+      <div class="letter">${L.letter}</div>
+      <div class="bonus">
+        <div class="bq"><b>⭐ Gold Star challenge (optional):</b> ${L.bonus.q}</div>
+        <div class="row">
+          <input type="text" id="binp" autocomplete="off" placeholder="Challenge answer" style="letter-spacing:0">
+          <button class="btn" id="bBtn">Check</button>
+          <button class="btn ghost" id="bHintBtn">💡 Hint</button>
+        </div>
+        <div class="hint" id="bhint">${L.bonus.h}</div>
+        <div class="feedback" id="bfb"></div>
+      </div>
+      <div style="margin-top:14px"><button class="btn gold big" id="doneBtn">${solvedCount()===locks.length?'Run to the gate 🚪':'Back to the graveyard 🗺️'}</button></div>
+    </div>
+  </div>`;
+  document.getElementById('backBtn').onclick=hub;
+  document.getElementById('doneBtn').onclick=hub;
+  document.getElementById('readBtn').onclick=()=>speak(document.getElementById('lockText').innerText+(L.after?' '+L.after:''));
+  document.getElementById('hintBtn').onclick=nextHint;
+  document.getElementById('bHintBtn').onclick=()=>{const k='b'+i,el=document.getElementById('bhint');if(!el.classList.contains('show')&&!st.hintLevel[k]){st.hintLevel[k]=1;st.hints++;updStats();}el.classList.toggle('show');};
+  document.getElementById('bBtn').onclick=checkBonus;
+  document.getElementById('binp').addEventListener('keydown',e=>{if(e.key==='Enter')checkBonus();});
+  document.getElementById('tryBtn').onclick=tryLock;
+  const tBtn=document.getElementById('tBtn');
+  if(tBtn)tBtn.onclick=()=>document.getElementById('tBox').classList.toggle('show');
+  document.getElementById('tGo').onclick=teacherUnlock;
+  document.getElementById('tInp').addEventListener('keydown',e=>{if(e.key==='Enter')teacherUnlock();});
+  if(L.kind==='seq'){
+    app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{if(st.solved[i])return;if(st.seq[i].length<L.code.length){st.seq[i].push(b.dataset.t);drawSeq();}});
+    document.getElementById('undoBtn').onclick=()=>{if(!st.solved[i]){st.seq[i].pop();drawSeq();}};
+    document.getElementById('clearBtn').onclick=()=>{if(!st.solved[i]){st.seq[i]=[];drawSeq();}};
+    drawSeq();
+  }else{
+    document.getElementById('codeInp').addEventListener('keydown',e=>{if(e.key==='Enter')tryLock();});
+  }
+  const lvl=st.hintLevel[i]||0;
+  if(lvl>=1)document.getElementById('hint1').classList.add('show');
+  if(lvl>=2)document.getElementById('hint2').classList.add('show');
+  updHintBtn();
+  if(st.solved[i])showSolved(false);
+}
+
+function updHintBtn(){const i=st.cur,lvl=st.hintLevel[i]||0,b=document.getElementById('hintBtn');
+  if(lvl===0)b.textContent='💡 Hint';else if(lvl===1)b.textContent='💡 Another hint';else{b.textContent='💡 No more hints';b.disabled=true;}}
+function nextHint(){const i=st.cur,lvl=st.hintLevel[i]||0;if(lvl>=2)return;st.hintLevel[i]=lvl+1;st.hints++;updStats();document.getElementById('hint'+(lvl+1)).classList.add('show');updHintBtn();}
+
+function drawSeq(){
+  const L=locks[st.cur],s=st.seq[st.cur],d=document.getElementById('seqd');
+  const labels=s.map(v=>L.tokens.find(t=>t.v===v).l);
+  d.innerHTML=labels.length?labels.map(l=>`<span>${l}</span>`).join('')+(labels.length<L.code.length?`<em>&nbsp;${L.code.length-labels.length} more</em>`:''):`<em>Tap the buttons below to enter ${L.code.length} in order</em>`;
+}
+
+function unlock(){const i=st.cur;st.solved[i]=true;drawLetters();showSolved(true);}
+
+function teacherUnlock(){
+  const v=document.getElementById('tInp').value.trim();
+  if(st.solved[st.cur])return;
+  if(v===CONFIG.TEACHER_PIN)unlock();
+  else{const fb=document.getElementById('fb');fb.className='feedback bad';fb.textContent='That teacher code is not right.';}
+}
+
+function tryLock(){
+  const i=st.cur,L=locks[i];if(st.solved[i])return;
+  const fb=document.getElementById('fb'),box=document.getElementById('qbox');
+  if(L.kind==='pin'){
+    const v=document.getElementById('codeInp').value.trim();
+    if(v===CONFIG.TEACHER_PIN)unlock();
+    else{box.classList.add('wrong');shake(box);fb.className='feedback bad';fb.textContent='🔒 Only your teacher can unlock this one. Show them your photos!';}
+    return;
+  }
+  let val;
+  if(L.kind==='seq')val=st.seq[i];
+  else{
+    const raw=document.getElementById('codeInp').value;
+    val=L.kind==='word'?raw.toUpperCase().replace(/[^A-Z]/g,''):raw.replace(/\D/g,'');
+    if(L.kind==='time'&&val.length===3)val='0'+val;
+    val=val.split('');
+  }
+  const code=Array.isArray(L.code)?L.code:L.code.split('');
+  const unit=L.kind==='word'?'letters':L.kind==='seq'?(L.tokens.length>4?'colours':'arrows'):'digits';
+  if(val.length!==code.length){fb.className='feedback bad';fb.textContent=`This lock needs ${code.length} ${unit}.`;shake(box);return;}
+  const n=val.filter((v,k)=>v===code[k]).length;
+  if(n===code.length)unlock();
+  else{box.classList.add('wrong');shake(box);fb.className='feedback bad';fb.textContent=`🔒 Still locked… ${n} of ${code.length} ${unit} are in the right place.`;}
+}
+
+function showSolved(fresh){
+  const i=st.cur,L=locks[i],box=document.getElementById('qbox');
+  box.classList.remove('wrong');box.classList.add('right');
+  const fb=document.getElementById('fb');fb.className='feedback ok';fb.textContent=fresh?'✅ Unlocked. Spooky good work!':'✅ You have already opened this lock.';
+  document.getElementById('tryBtn').disabled=true;
+  if(L.kind==='seq'){st.seq[i]=L.code.slice();drawSeq();}
+  else{const inp=document.getElementById('codeInp');inp.value=L.kind==='pin'?'':L.code;inp.disabled=true;}
+  document.getElementById('tBox').classList.remove('show');
+  document.getElementById('succ').classList.add('show');
+  if(st.bonus[i]){const b=document.getElementById('binp');b.value=L.bonus.a[0];b.disabled=true;document.getElementById('bBtn').disabled=true;const bf=document.getElementById('bfb');bf.className='feedback ok';bf.textContent='⭐ Gold star already earned!';}
+  if(fresh){burst(80);document.getElementById('succ').scrollIntoView&&document.getElementById('succ').scrollIntoView({behavior:'smooth',block:'center'});}
+}
+
+function checkBonus(){
+  const i=st.cur,L=locks[i],inp=document.getElementById('binp'),fb=document.getElementById('bfb');
+  if(inp.disabled)return;
+  if(bonusRight(inp.value,L.bonus.a)){st.bonus[i]=true;st.stars++;updStats();inp.disabled=true;document.getElementById('bBtn').disabled=true;fb.className='feedback ok';fb.textContent='⭐ Gold star earned! Spooktacular.';burst(40);}
+  else{fb.className='feedback bad';fb.textContent="Not quite. Try again, use the hint, or move on. It's optional!";}
+}
+
+function gate(){
+  hush();window.scrollTo(0,0);
+  app.innerHTML=`<div class="card center">
+    <button class="btn ghost" id="backBtn" style="float:left">⬅ Back</button>
+    <div style="clear:both;font-size:56px">🚪🕯️</div>
+    <h2>The Graveyard Gate</h2>
+    <p class="story">The gate is held shut by a word lock. Your 12 letters are all here, but they're jumbled! Rearrange them to spell a Halloween phrase (3 words). <i>What do you say at the door?</i></p>
+    <div class="tiles">${locks.map(L=>`<div>${L.letter}</div>`).join('')}</div>
+    <div class="row" style="justify-content:center">
+      <input type="text" id="gateInp" autocomplete="off" placeholder="3-word phrase" style="max-width:320px;text-align:center">
+      <button class="btn gold big" id="gBtn">Open the gate</button>
+    </div>
+    <div class="feedback" id="gfb"></div>
+    <button class="btn ghost" id="gHint">💡 Hint</button>
+    <div class="hint" id="gh">It's what children say when they knock on doors on Halloween. It starts with T…</div>
+  </div>`;
+  document.getElementById('backBtn').onclick=hub;
+  document.getElementById('gBtn').onclick=openGate;
+  document.getElementById('gateInp').addEventListener('keydown',e=>{if(e.key==='Enter')openGate();});
+  document.getElementById('gHint').onclick=()=>{if(!st.gateHint){st.gateHint=true;st.hints++;updStats();}document.getElementById('gh').classList.add('show');};
+}
+
+function openGate(){
+  const v=document.getElementById('gateInp').value.toUpperCase().replace(/[^A-Z]/g,'');
+  if(v===FINAL)win();
+  else{const fb=document.getElementById('gfb');fb.className='feedback bad';fb.textContent="The gate rattles but won't open… something is coming! Try another arrangement.";shake(document.querySelector('.tiles'));}
+}
+
+function win(){
+  clearInterval(st.timer);
+  if(!st.finished){st.finished=true;st.secs=Math.round((Date.now()-st.start)/1000);st.entryId=Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  const beat=st.secs<=CONFIG.GAME_MINUTES*60;
+  const title=st.stars>=11?'Ruler of the Graveyard 🏆':st.stars>=6?'Fearless Escaper 🥇':'Brave Escaper 🎖️';
+  app.innerHTML=`<div class="card center">
+    <div style="font-size:64px">🎃🎉</div>
+    <h1>${esc(st.team)} escaped${beat?' before midnight!':'!'}</h1>
+    <span class="tag" style="font-size:16px">${title}</span>
+    <div class="statbox">
+      <div>Time<b>${fmtS(st.secs)}</b></div>
+      <div>Hints used<b>${st.hints}</b></div>
+      <div>Gold stars<b>${st.stars} / ${locks.length}</b></div>
+    </div>
+    <h3>🏆 Fastest escapers</h3>
+    <div id="winBoard" style="text-align:left"><p class="small center">Sending your time to the spirits…</p></div>
+    <div class="rules">
+      🤔 <b>Reflect:</b> Which lock was the trickiest, and how did your team crack it? Which type of puzzle suited your thinking best?<br>
+      🎨 <b>Create:</b> Design your own spooky lock for a classmate. Choose a lock type and write 3–4 linked questions.<br>
+      📸 Take a screenshot of this screen to show your teacher.
+    </div>
+    <button class="btn gold big" id="again">Play again</button>
+  </div>`;
+  document.getElementById('again').onclick=()=>{reset();intro();window.scrollTo(0,0);};
+  burst(220);setTimeout(()=>burst(160),700);
+  const entry={id:st.entryId,team:st.team,secs:st.secs,hints:st.hints,stars:st.stars};
+  lbSubmit(entry).then(data=>{
+    const el=document.getElementById('winBoard');if(!el)return;
+    el.innerHTML=lbTable(data,st.entryId);
+    clearInterval(st.lbTimer);
+    st.lbTimer=setInterval(()=>{if(document.getElementById('winBoard'))showBoard('winBoard',st.entryId);else clearInterval(st.lbTimer);},20000);
+  });
+}
+
+/* ================= CONFETTI ================= */
+const cv=document.getElementById('confetti'),cx=cv.getContext&&cv.getContext('2d');let parts=[],anim=null;
+function size(){cv.width=innerWidth;cv.height=innerHeight;}
+addEventListener('resize',size);size();
+function burst(n){
+  if(!cx)return;
+  const cols=['#ff7a1a','#a97bff','#7cf06a','#ffc93c','#1a1a1a'];
+  for(let i=0;i<n;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.8,y:-10-Math.random()*innerHeight*.3,vx:(Math.random()-.5)*4,vy:2+Math.random()*4,s:5+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[i%cols.length]});
+  if(!anim)anim=requestAnimationFrame(step);
+}
+function step(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore();});
+  parts=parts.filter(p=>p.y<cv.height+20);
+  anim=parts.length?requestAnimationFrame(step):null;
+  if(!anim)cx.clearRect(0,0,cv.width,cv.height);
+}
+
+reset();intro();
+</script>
+</body>
+</html>
